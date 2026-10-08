@@ -8,6 +8,7 @@ import { LABS_LOCATION_OPTIONS } from "@/client/features/keywords/locations";
 import { LocationSelect } from "@/client/components/LocationSelect";
 import { ResearchScopeSelect } from "@/client/components/ResearchScopeSelect";
 import { SearchCard, SearchInput } from "@/client/components/SearchCard";
+import { ActionCost } from "@/client/features/billing/ActionCost";
 import {
   Select,
   SelectContent,
@@ -16,6 +17,7 @@ import {
   SelectValue,
 } from "@/client/components/ui/select";
 import type { ResearchScope } from "@/shared/researchScope";
+import { DEFAULT_DOMAIN_KEYWORDS_PAGE_SIZE } from "@/types/schemas/domain";
 
 const SORT_ITEMS: { value: DomainSortMode; label: string }[] = [
   { value: "rank", label: "By Rank" },
@@ -54,6 +56,15 @@ export function DomainSearchCard({
       pending={isLoading}
       error={domainError}
       errorId="domain-input-error"
+      secondRow={
+        <ActionCost
+          prefix="Each search costs"
+          request={{
+            action: "domainSearch",
+            pageSize: DEFAULT_DOMAIN_KEYWORDS_PAGE_SIZE,
+          }}
+        />
+      }
     >
       <controlsForm.Field name="domain">
         {(field) => (

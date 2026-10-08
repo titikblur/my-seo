@@ -9,6 +9,7 @@ import {
 import { sortBy } from "remeda";
 import { Button } from "@/client/components/ui/button";
 import { Card, CardContent } from "@/client/components/ui/card";
+import { ActionCost } from "@/client/features/billing/ActionCost";
 import { Checkbox } from "@/client/components/ui/checkbox";
 import {
   Field,
@@ -244,15 +245,27 @@ export function PromptExplorerForm({
                 </TooltipContent>
               </Tooltip>
             </div>
-            <Button
-              type="submit"
-              className="px-6"
-              pending={isLoading}
-              disabled={supportedModels.length === 0}
-            >
-              Run {supportedModels.length}{" "}
-              {supportedModels.length === 1 ? "model" : "models"}
-            </Button>
+            <div className="flex items-center gap-3">
+              {supportedModels.length > 0 ? (
+                <ActionCost
+                  prefix="Costs up to"
+                  request={{
+                    action: "promptExplorer",
+                    models: supportedModels,
+                    webSearch: form.webSearch,
+                  }}
+                />
+              ) : null}
+              <Button
+                type="submit"
+                className="px-6"
+                pending={isLoading}
+                disabled={supportedModels.length === 0}
+              >
+                Run {supportedModels.length}{" "}
+                {supportedModels.length === 1 ? "model" : "models"}
+              </Button>
+            </div>
           </div>
 
           {validationError ? (

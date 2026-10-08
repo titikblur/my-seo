@@ -7,10 +7,12 @@ import {
 } from "@/client/lib/forms";
 import { ResearchScopeSelect } from "@/client/components/ResearchScopeSelect";
 import { SearchCard, SearchInput } from "@/client/components/SearchCard";
+import { ActionCost } from "@/client/features/billing/ActionCost";
 import {
   defaultScopeForInput,
   parseResearchTarget,
 } from "@/shared/researchScope";
+import { DEFAULT_BACKLINKS_PAGE_SIZE } from "@/types/schemas/backlinks";
 import type { BacklinksSearchState } from "./backlinksPageTypes";
 
 type SearchDraft = Pick<BacklinksSearchState, "target" | "scope">;
@@ -84,6 +86,15 @@ export function BacklinksSearchCard({
       }}
       error={targetError}
       errorId="backlinks-target-error"
+      secondRow={
+        <ActionCost
+          prefix="Each search costs"
+          request={{
+            action: "backlinksSearch",
+            pageSize: DEFAULT_BACKLINKS_PAGE_SIZE,
+          }}
+        />
+      }
     >
       <form.Field name="target">
         {(field) => (

@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { organizationContextQueryOptions } from "@/client/features/team/organizationQueries";
+import { CreditBalanceIndicator } from "@/client/features/billing/CreditBalanceIndicator";
 import { switchOrganization } from "@/serverFunctions/organization";
 import {
   connectNavGroup,
@@ -216,6 +217,7 @@ function AccountFooter({ ready }: { ready: boolean }) {
   return (
     <UiSidebarFooter className="gap-0 border-t border-sidebar-border pb-safe">
       <SidebarMenu>
+        <CreditBalanceIndicator ready={ready} />
         <SidebarNavLink
           icon={CircleHelp}
           label="Help & Community"

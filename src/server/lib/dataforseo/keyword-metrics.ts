@@ -31,7 +31,7 @@ export async function fetchAdsSearchVolumeForKeywords(
 }
 
 // DataForSEO's batch metric endpoints accept up to ~700 keywords per request.
-const KEYWORD_METRICS_BATCH_SIZE = 700;
+export const KEYWORD_METRICS_BATCH_SIZE = 700;
 
 // `intent` is the raw `main_intent` (null for Google Ads); run it through
 // `normalizeIntent` for the app enum. `competition` is a 0-1 ratio.

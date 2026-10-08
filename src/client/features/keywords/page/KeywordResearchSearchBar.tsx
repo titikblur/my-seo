@@ -11,7 +11,8 @@ import {
   InputGroupAddon,
   InputGroupTextarea,
 } from "@/client/components/ui/input-group";
-import { KeywordAreaField, LocalVolumeCostNote } from "./KeywordAreaField";
+import { ActionCost } from "@/client/features/billing/ActionCost";
+import { KeywordAreaField } from "./KeywordAreaField";
 import { KeywordSearchOptions } from "./KeywordSearchOptions";
 import type { KeywordResearchControllerState } from "./types";
 
@@ -123,14 +124,10 @@ export function KeywordResearchSearchBar({ controller }: Props) {
             ) : null;
           }}
         </controlsForm.Field>
-        <controlsForm.Subscribe
-          selector={(state) =>
-            [state.values.locationCode, state.values.locationName] as const
-          }
-        >
-          {([locationCode, locationName]) => (
+        <controlsForm.Subscribe selector={(state) => state.values}>
+          {(values) => (
             <>
-              {isLabsLocationCode(locationCode) ? null : (
+              {isLabsLocationCode(values.locationCode) ? null : (
                 <Alert variant="info" role="status">
                   <Info />
                   <AlertDescription>
@@ -140,7 +137,21 @@ export function KeywordResearchSearchBar({ controller }: Props) {
                   </AlertDescription>
                 </Alert>
               )}
-              {locationName ? <LocalVolumeCostNote /> : null}
+              <ActionCost
+                prefix={
+                  values.locationName
+                    ? "Each search (local volume included) costs"
+                    : "Each search costs"
+                }
+                request={{
+                  action: "keywordResearch",
+                  locationCode: values.locationCode,
+                  mode: values.mode,
+                  resultLimit: values.resultLimit,
+                  clickstream: values.clickstream,
+                  local: Boolean(values.locationName),
+                }}
+              />
             </>
           )}
         </controlsForm.Subscribe>

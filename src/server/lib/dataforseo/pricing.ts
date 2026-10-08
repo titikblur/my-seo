@@ -45,11 +45,14 @@ import {
   LLM_RESPONSE_WEB_SEARCH_DEFAULT,
   resolveLlmMentionsLimit,
 } from "@/server/lib/dataforseo/ai";
+import { KEYWORD_METRICS_BATCH_SIZE } from "@/server/lib/dataforseo/keyword-metrics";
 import type { LlmResponseModelSlug } from "@/server/lib/dataforseo/llm-models";
+import { getKeywordDataProvider } from "@/shared/keyword-locations";
 import {
   costPerSerpAtDepth,
   serpKeywordCostMultiplier,
 } from "@/shared/rank-tracking";
+import type { ActionCostRequest } from "@/types/schemas/action-cost";
 
 /**
  * Raw DataForSEO USD upper bound for one metered call, computed from the
@@ -289,3 +292,62 @@ export const dataforseoPricing = {
     }),
   },
 } as const;
+
+// A site audit's Lighthouse sample is the homepage plus one page per URL
+// template, capped at 10 pages (selectLighthouseSample), each checked on mobile
+// and desktop.
+const LIGHTHOUSE_AUDIT_MAX_CHECKS = 10 * 2;
+// The backlinks overview asks history for the trailing year.
+const BACKLINKS_HISTORY_DAYS = 366;
+
+/**
+ * Raw-USD estimate of what one user-facing action costs, for display beside
+ * the button that starts it. Unlike `dataforseoPricing` (an upper bound for the
+ * credit hold), this prices the typical run: a cached result costs nothing, and
+ * keyword research's rare thin-result fallback is not counted.
+ */
+export function estimateActionRawUsd(request: ActionCostRequest): number {
+  switch (request.action) {
+    case "keywordResearch": {
+      const localUsd = request.local ? GOOGLE_ADS_LIVE_TASK_USD : 0;
+      if (getKeywordDataProvider(request.locationCode) === "google_ads") {
+        return GOOGLE_ADS_LIVE_TASK_USD + localUsd;
+      }
+      // Local volume replaces clickstream, so a local search never pays for it.
+      const clickstream = request.clickstream && !request.local;
+      // Auto blends suggestions and ideas, half the limit each.
+      const labs =
+        request.mode === "auto"
+          ? 2 * labsUsd(Math.ceil(request.resultLimit / 2), clickstream)
+          : labsUsd(request.resultLimit, clickstream);
+      return labs + localUsd;
+    }
+    case "serpAnalysis":
+      return serpUsd(request.depth, "live", request.keyword ?? "");
+    case "keywordMetricsRefresh": {
+      const batches = Math.ceil(
+        request.keywordCount / KEYWORD_METRICS_BATCH_SIZE,
+      );
+      const lookups =
+        getKeywordDataProvider(request.locationCode) === "google_ads"
+          ? batches * GOOGLE_ADS_LIVE_TASK_USD
+          : batches * LABS_TASK_USD + request.keywordCount * LABS_ROW_USD;
+      return lookups + (request.local ? GOOGLE_ADS_LIVE_TASK_USD : 0);
+    }
+    case "domainSearch":
+      return labsUsd(1) + labsUsd(request.pageSize);
+    case "backlinksSearch":
+      return (
+        backlinksUsd(1) +
+        backlinksUsd(BACKLINKS_HISTORY_DAYS) +
+        backlinksUsd(request.pageSize)
+      );
+    case "siteAuditLighthouse":
+      return LIGHTHOUSE_AUDIT_MAX_CHECKS * LIGHTHOUSE_LIVE_USD;
+    case "promptExplorer":
+      return request.models.reduce((sum, model) => {
+        const price = LLM_RESPONSE_USD[model];
+        return sum + (request.webSearch ? price.webSearch : price.noSearch);
+      }, 0);
+  }
+}
