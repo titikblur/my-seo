@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MoreHorizontal, Play, RefreshCw } from "lucide-react";
 import { ConfirmDialog } from "@/client/components/ConfirmDialog";
 import { Button } from "@/client/components/ui/button";
+import { ActionCost } from "@/client/features/billing/ActionCost";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,8 @@ export function MoreMenu({
   onRefreshMetrics,
   metricsRefreshing,
   trackedKeywordCount,
+  locationCode,
+  isLocal,
   hasData,
 }: {
   onCheckNow: () => void;
@@ -37,6 +40,8 @@ export function MoreMenu({
   onRefreshMetrics: () => void;
   metricsRefreshing: boolean;
   trackedKeywordCount: number;
+  locationCode: number;
+  isLocal: boolean;
   hasData: boolean;
 }) {
   const [confirmingRefresh, setConfirmingRefresh] = useState(false);
@@ -89,8 +94,19 @@ export function MoreMenu({
         >
           This fetches new volume, difficulty, and CPC for all{" "}
           {trackedKeywordCount} tracked keyword
-          {trackedKeywordCount !== 1 ? "s" : ""}. Each keyword uses credits.
-          Rankings do not change.
+          {trackedKeywordCount !== 1 ? "s" : ""}. Rankings do not change.{" "}
+          {trackedKeywordCount > 0 ? (
+            <ActionCost
+              prefix="Costs"
+              className="font-mono font-semibold text-foreground"
+              request={{
+                action: "keywordMetricsRefresh",
+                locationCode,
+                keywordCount: trackedKeywordCount,
+                local: isLocal,
+              }}
+            />
+          ) : null}
         </ConfirmDialog>
       ) : null}
     </>

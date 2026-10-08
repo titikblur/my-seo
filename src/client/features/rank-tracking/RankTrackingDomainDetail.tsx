@@ -332,6 +332,8 @@ export function RankTrackingDomainDetail({
           onRefreshMetrics={refreshMetrics}
           metricsRefreshing={metricsRefreshing}
           trackedKeywordCount={trackedKeywordCount}
+          locationCode={config.locationCode}
+          isLocal={Boolean(config.locationName)}
           checkBusy={isBusy}
           checkDisabled={planStatus !== "paid"}
           hasData={filtered.length > 0}

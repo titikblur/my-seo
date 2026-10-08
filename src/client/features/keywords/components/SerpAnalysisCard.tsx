@@ -4,11 +4,13 @@ import { ExternalLink, Globe } from "lucide-react";
 import { ErrorState } from "@/client/components/ErrorState";
 import { ExportMenu } from "@/client/components/ExportMenu";
 import { Button } from "@/client/components/ui/button";
+import { useActionCost } from "@/client/features/billing/ActionCost";
 import { DataTable, useDataTable } from "@/client/components/table/DataTable";
 import { DataTableToolbar } from "@/client/components/table/DataTableToolbar";
 import { TablePagination } from "@/client/components/table/TablePagination";
 import { exportRows } from "@/client/lib/exportRows";
 import type { SerpResultItem } from "@/types/keywords";
+import { formatUsd } from "@/shared/format";
 import { safeHttpUrl } from "@/shared/safe-url";
 
 const columnHelper = createColumnHelper<SerpResultItem>();
@@ -92,6 +94,17 @@ export function SerpAnalysisCard({
   );
   const table = useDataTable({ data: pageItems, columns });
   const hasItems = !loading && items.length > 0;
+  // Every keyword click buys a top-20 crawl; paging past it buys the top 100.
+  const topCostUsd = useActionCost({
+    action: "serpAnalysis",
+    depth: 20,
+    keyword: keyword ?? undefined,
+  });
+  const deepCostUsd = useActionCost(
+    canLoadMore
+      ? { action: "serpAnalysis", depth: 100, keyword: keyword ?? undefined }
+      : null,
+  );
 
   const retryButton = onRetry ? (
     <Button variant="outline" size="sm" pending={retrying} onClick={onRetry}>
@@ -161,9 +174,14 @@ export function SerpAnalysisCard({
           ? { kind: "error", title: error, action: retryButton }
           : {
               title: "No SERP details available for this keyword yet.",
-              description: keyword
-                ? "Try clicking another keyword to load data."
-                : undefined,
+              description: [
+                keyword ? "Try clicking another keyword to load data." : null,
+                topCostUsd !== undefined
+                  ? `Each keyword you open costs ~${formatUsd(topCostUsd)}.`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" "),
             }
       }
       footer={
@@ -175,7 +193,13 @@ export function SerpAnalysisCard({
             isLoading={loadingMore}
             // Past the loaded results, "Next" buys a deeper crawl. The button
             // says so rather than spending silently.
-            loadMoreLabel={canLoadMore ? "Load top 100" : undefined}
+            loadMoreLabel={
+              canLoadMore
+                ? deepCostUsd === undefined
+                  ? "Load top 100"
+                  : `Load top 100 (~${formatUsd(deepCostUsd)})`
+                : undefined
+            }
             onPageChange={(nextPage) => onPageChange(nextPage - 1)}
           />
         ) : null

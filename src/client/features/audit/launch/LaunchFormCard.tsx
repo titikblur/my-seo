@@ -22,6 +22,7 @@ import {
 } from "@/client/features/audit/launch/types";
 import type { useLaunchController } from "@/client/features/audit/launch/useLaunchController";
 import { getFieldError, getFormError } from "@/client/lib/forms";
+import { ActionCost } from "@/client/features/billing/ActionCost";
 import { isHostedClientAuthMode } from "@/lib/auth-mode";
 import { RENDERED_MAX_AUDIT_PAGES } from "@/shared/audit-limits";
 import { renderingEstimateText } from "@/shared/audit-rendering";
@@ -192,8 +193,14 @@ function LighthouseOptions({ launchForm }: Pick<Props, "launchForm">) {
         {(runLighthouse) =>
           runLighthouse ? (
             <FieldDescription>
-              We choose a sample of 20 pages to audit, removing pages from
-              duplicate templates.
+              We choose a sample of up to 10 pages to audit on mobile and
+              desktop, removing pages from duplicate templates.{" "}
+              <ActionCost
+                prefix="Adds up to"
+                request={{ action: "siteAuditLighthouse" }}
+                className=""
+              />
+              .
             </FieldDescription>
           ) : null
         }

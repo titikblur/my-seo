@@ -22,6 +22,8 @@ export function RankTrackingTableToolbar({
   onRefreshMetrics,
   metricsRefreshing,
   trackedKeywordCount,
+  locationCode,
+  isLocal,
   checkBusy,
   checkDisabled,
   hasData,
@@ -43,6 +45,8 @@ export function RankTrackingTableToolbar({
   onRefreshMetrics: () => void;
   metricsRefreshing: boolean;
   trackedKeywordCount: number;
+  locationCode: number;
+  isLocal: boolean;
   checkBusy: boolean;
   checkDisabled: boolean;
   hasData: boolean;
@@ -126,6 +130,8 @@ export function RankTrackingTableToolbar({
           onRefreshMetrics={onRefreshMetrics}
           metricsRefreshing={metricsRefreshing}
           trackedKeywordCount={trackedKeywordCount}
+          locationCode={locationCode}
+          isLocal={isLocal}
           hasData={hasData}
         />
       )}

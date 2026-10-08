@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { dataforseoPricing } from "@/server/lib/dataforseo/pricing";
+import {
+  dataforseoPricing,
+  estimateActionRawUsd,
+} from "@/server/lib/dataforseo/pricing";
 import { creditsForProviderUsd } from "@/shared/billing";
 import { estimateRankCheckCredits } from "@/shared/rank-tracking";
 
@@ -168,5 +171,69 @@ describe("dataforseoPricing", () => {
     expect(creditsForProviderUsd(estimateUsd)).toBe(
       estimateRankCheckCredits([keyword], "desktop", 20, "live").costCredits,
     );
+  });
+});
+
+describe("estimateActionRawUsd", () => {
+  const us = { locationCode: 2840, local: false } as const;
+  const iceland = { locationCode: 2352, local: false } as const;
+
+  it("shows what the billing seam holds for a single metered call", () => {
+    expect(
+      estimateActionRawUsd({
+        action: "serpAnalysis",
+        depth: 20,
+        keyword: "seo",
+      }),
+    ).toBe(dataforseoPricing.serp.live({ keyword: "seo", ...location }));
+  });
+
+  it("prices an auto keyword search as two half-limit Labs calls", () => {
+    const half = dataforseoPricing.keywords.suggestions({
+      keyword: "seo",
+      ...location,
+      limit: 75,
+    });
+    expect(
+      estimateActionRawUsd({
+        action: "keywordResearch",
+        ...us,
+        mode: "auto",
+        resultLimit: 150,
+        clickstream: false,
+      }),
+    ).toBeCloseTo(2 * half, 10);
+  });
+
+  it("adds a Google Ads lookup for local volume and drops clickstream", () => {
+    const national = estimateActionRawUsd({
+      action: "keywordResearch",
+      ...us,
+      mode: "related",
+      resultLimit: 150,
+      clickstream: false,
+    });
+    expect(
+      estimateActionRawUsd({
+        action: "keywordResearch",
+        ...us,
+        local: true,
+        mode: "related",
+        resultLimit: 150,
+        clickstream: true,
+      }),
+    ).toBeCloseTo(national + 0.09, 10);
+  });
+
+  it("prices Google-Ads-only countries as one Ads call whatever the options", () => {
+    expect(
+      estimateActionRawUsd({
+        action: "keywordResearch",
+        ...iceland,
+        mode: "ideas",
+        resultLimit: 500,
+        clickstream: true,
+      }),
+    ).toBe(0.09);
   });
 });
